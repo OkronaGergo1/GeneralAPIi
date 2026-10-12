@@ -1,0 +1,65 @@
+### GET ALL RECORDS FROM A TABLE
+GET http://localhost:4444/steps
+Content-Type: application/json
+
+### SELECT A SPECIFIC RECORD BY ID FROM A TABLE
+GET http://localhost:4444/steps/3
+Content-Type: application/json
+
+### SELECT RECORDS FROM A TABLE WHERE A SPECIFIC FIELD MATCHES A VALUE
+GET http://localhost:4444/users/userID/1
+Content-Type: application/json
+
+### SELECT RECORDS FROM A TABLE WHERE A SPECIFIC FIELD MATCHES A VALUE WITH OPERATOR
+GET http://localhost:4444/steps/step_count/gt/5000
+Content-Type: application/json
+
+### ADD NEW RECORD TO A TABLE
+POST http://localhost:4444/steps
+Content-Type: application/json
+
+{
+    "userID": 3,
+    "step_count": 6000,
+    "date": "2026-10-12"
+}
+
+### UPDATE RECORD IN A SPECIFIC FIELDS
+PATCH http://localhost:4444/steps/3
+Content-Type: application/json
+
+{
+    "step_count": 2500
+}
+
+### UPDATE RECORDS IN A TABLE WHERE A SPECIFIC FIELD MATCHES A VALUE
+PATCH http://localhost:4444/steps/userID/eq/3
+Content-Type: application/json
+
+{
+    "step_count": 2500
+}
+
+### UPDATE RECORDS IN A TABLE WHERE A SPECIFIC FIELD MATCHES A VALUE WITH AN OPERATOR
+PATCH http://localhost:4444/steps/step_count/lt/3000
+Content-Type: application/json
+
+{
+    "step_count": 2500
+}
+
+### DELETE ALL RECORDS FROM A TABLE
+DELETE http://localhost:4444/steps
+Content-Type: application/json
+
+### DELETE A SPECIFIC RECORD BY ID FROM A TABLE
+DELETE http://localhost:4444/steps/3
+Content-Type: application/json
+
+### DELETE RECORDS IN A TABLE WHERE A SPECIFIC FIELD MATCHES A VALUE
+DELETE http://localhost:4444/steps/userID/3
+Content-Type: application/json
+
+### DELETE RECORDS IN A TABLE WHERE A SPECIFIC FIELD MATCHES A VALUE WITH AN OPERATOR
+DELETE http://localhost:4444/steps/step_count/lt/3000
+Content-Type: application/json

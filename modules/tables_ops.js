@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-var db = require('../utils/database');
+var db = require('../utils/database.js');
 
 // SELECT ALL RECORDS FROM A TABLE
 router.get('/:table', (req, res) =>{
@@ -52,6 +52,10 @@ router.get('/:table/:field/:operator/:value', (req, res) =>{
     let field = req.params.field;
     let operator = getOps(req.params.operator);
     let value = req.params.value;
+    if (operator === 'LIKE' || operator === 'NOT LIKE'){
+        value = '%' + req.params.value + '%';
+    }
+
     db.query(`SELECT * FORM ${table} where ${field} ${operator} ?`, [value], (err, results) =>{
         if (err){
             return res.status(500).json({ error: 'Database query error: ' + err.message})
@@ -80,7 +84,7 @@ router.post('/:table', (req, res) =>{
     });
 });
 
-//UPDATE RECORDS FROM A TABLE
+// UPDATE RECORDS FROM A TABLE
 router.patch('/:table/:id', (req, res) =>{
     let table = req.params.table;
     let id = req.params.id;
@@ -98,6 +102,46 @@ router.patch('/:table/:id', (req, res) =>{
     });
 });
 
+// UPDATE RECORD IN A SPECIFIC FIELD
+router.patch('/:table/:field/:value', (req, res) =>{
+    let table = req.params.table;
+    let field = req.params.field;
+    let value = req.params.value;
+    let data = req.body;
+
+    let updates = Object.entries(data).map(([key, value]) => `${key} = '${value}'`).join(', ');
+
+    db.query(`UPDATE ${table} SET ${updates} WHERE ${field} = ?`,[value], (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error: ' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
+
+router.patch('/:table/:field/:operator/:value', (req, res) =>{
+    let table = req.params.table;
+    let field = req.params.field;
+    let operator = getOps(req.params.operator);
+    let value = req.params.value;
+    if (operator === 'LIKE' || operator === 'NOT LIKE'){
+        value = '%' + req.params.value + '%';
+    }
+    let data = req.body;
+
+    let updates = Object.entries(data).map(([key, value]) => `${key} = '${value}'`).join(', ');
+
+    db.query(`UPDATE ${table} SET ${updates} WHERE ${field} ${operator} ?`,[value], (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error: ' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
 //DELETE ALL RECORDS FROM A TABLE
 router.delete('/:table', (req, res) =>{
     let table = req.params.table;
@@ -127,6 +171,39 @@ router.delete('/:table/:id', (req, res) =>{
     });
 });
 
+router.delete('/:table/:field/:value', (req, res) =>{
+    let table = req.params.table;
+    let field = req.params.field;
+    let value = req.params.value;
+    db.query(`DELETE FORM ${table} where ${field} = ?`, [value], (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error: ' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
+
+router.delete('/:table/:field/:operator/:value', (req, res) =>{
+    let table = req.params.table;
+    let field = req.params.field;
+    let operator = getOps(req.params.operator);
+    let value = req.params.value;
+    if (operator === 'LIKE' || operator === 'NOT LIKE'){
+        value = '%' + req.params.value + '%';
+    }
+
+    db.query(`DELETE FORM ${table} where ${field} ${operator} ?`, [value], (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error: ' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
+
 function getOps(op){
     switch (op){
         case 'eq':
@@ -141,9 +218,11 @@ function getOps(op){
             return '>=';
         case 'ne':
             return '<>';
-        case 'like':
+        case 'lk':
             return 'LIKE';
-        case 'not':
+        case 'nlk':
+            return 'NOT LIKE';    
+        case 'nt':
             return 'NOT';
         default:
             throw new Error('Invalid operator')
