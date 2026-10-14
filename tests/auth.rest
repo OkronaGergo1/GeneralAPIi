@@ -1,0 +1,24 @@
+@host = http://localhost
+@port = 4444
+@server = {{host}}:{{port}}
+
+### Register a new user
+POST  {{server}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Teszt Elek",
+    "email": "tesztelek@gmail.com",
+    "passwd": "TitkosJelszo123!",
+    "confirm": "TitkosJelszo123!",
+    "role": "user"
+}
+
+### Login
+POST {{server}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "tesztelek@gmail.com",
+    "passwd": "TitkosJelszo123!"
+}
