@@ -1,7 +1,161 @@
 const express = require('express');
 const router = express.Router();
+const {tokencheck} = require('../utiles/jwt.js')
 
 var db = require('../utils/database.js');
+
+const publicTables = process.env.PUBLIC_TABLES ? process.env.PUBLIC_TABLES.split(',').map(table => table.trim()) : [];
+
+//------------------------------------------------------------
+// PUBLIC ENDPOINTS
+//------------------------------------------------------------
+
+//READ ALL
+router.get("/public/:table", (req, res) => {
+    let table = req.params.table;
+
+    if (!publicTables.includes(table)){
+        return res.status(403).json({ error: 'Access to this table is forbidden'})
+    }
+
+    db.query(`SELECT * FORM ${table}`, (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
+
+// SELECT A SPECIFIC RECORS BY ID FROM A TABLE
+router.get('/public/:table/:id', (req, res) =>{
+    let table = req.params.table;
+    let id = req.params.id;
+
+    if (!publicTables.includes(table)){
+        return res.status(403).json({ error: 'Access to this table is forbidden'})
+    }
+
+    db.query(`SELECT * FROM ${table} where ID = ?`, [id], (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error: ' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
+
+//SELECT RECORDS FROM A TABLE WHERE A SPECIFIC FIELD MATCHES A VALUE
+router.get('/public/:table/:field/:value', (req, res) =>{
+    let table = req.params.table;
+    let field = req.params.field;
+    let value = req.params.value;
+
+    if (!publicTables.includes(table)){
+        return res.status(403).json({ error: 'Access to this table is forbidden'})
+    }
+
+    db.query(`SELECT * FORM ${table} where ${field} = ?`, [value], (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error: ' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
+
+router.get('/public/:table/:field/:operator/:value', (req, res) =>{
+    let table = req.params.table;
+    let field = req.params.field;
+    let operator = getOps(req.params.operator);
+    let value = req.params.value;
+    if (operator === 'LIKE' || operator === 'NOT LIKE'){
+        value = '%' + req.params.value + '%';
+    }
+
+    if (!publicTables.includes(table)){
+        return res.status(403).json({ error: 'Access to this table is forbidden'})
+    }
+
+    db.query(`SELECT * FORM ${table} where ${field} ${operator} ?`, [value], (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error: ' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
+
+//------------------------------------------------------------
+// PRIVATE ENDPOINT
+//------------------------------------------------------------
+
+//READ ALL
+router.get('/:table', tokencheck, (req, res) =>{
+    let table = req.params.table;
+
+    db.query(`SELECT * FORM ${table}`, (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error'})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
+
+// SELECT A SPECIFIC RECORS BY ID FROM A TABLE
+router.get('/:table/:id', (req, res) =>{
+    let table = req.params.table;
+    let id = req.params.id;
+
+    db.query(`SELECT * FROM ${table} where ID = ?`, [id], (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error: ' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
+
+//SELECT RECORDS FROM A TABLE WHERE A SPECIFIC FIELD MATCHES A VALUE
+router.get('/:table/:field/:value', (req, res) =>{
+    let table = req.params.table;
+    let field = req.params.field;
+    let value = req.params.value;
+    db.query(`SELECT * FORM ${table} where ${field} = ?`, [value], (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error: ' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
+
+router.get('/:table/:field/:operator/:value', (req, res) =>{
+    let table = req.params.table;
+    let field = req.params.field;
+    let operator = getOps(req.params.operator);
+    let value = req.params.value;
+    if (operator === 'LIKE' || operator === 'NOT LIKE'){
+        value = '%' + req.params.value + '%';
+    }
+
+    db.query(`SELECT * FORM ${table} where ${field} ${operator} ?`, [value], (err, results) =>{
+        if (err){
+            return res.status(500).json({ error: 'Database query error: ' + err.message})
+        }
+        else{
+            return res.status(200).json(results);
+        }
+    });
+});
 
 // SELECT ALL RECORDS FROM A TABLE
 router.get('/:table', (req, res) =>{
@@ -22,7 +176,7 @@ router.get('/:table/:id', (req, res) =>{
     let table = req.params.table;
     let id = req.params.id;
 
-    db.query(`SELECT * FORM ${table} where ID = ?`, [id], (err, results) =>{
+    db.query(`SELECT * FROM ${table} where ID = ?`, [id], (err, results) =>{
         if (err){
             return res.status(500).json({ error: 'Database query error: ' + err.message})
         }
@@ -97,7 +251,7 @@ router.patch('/:table/:id', (req, res) =>{
             return res.status(500).json({ error: 'Database query error: ' + err.message})
         }
         else{
-            return res.status(200).json({message: 'All record deleted succesfully'});
+            return res.status(200).json({message: 'All record updated succesfully'});
         }
     });
 });
