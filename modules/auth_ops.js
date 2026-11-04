@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const SHA1 = require('sha1');
 var db = require('../utils/database.js');
+const { generateToken } = require('../utiles/jwt.js')
 
 // login
 router.post('/login', (req, res) =>{
@@ -14,6 +15,21 @@ router.post('/login', (req, res) =>{
     }
 
     db.query(`SELECT * FROM ${table} WHERE email = ?`, [values[emailIdx]], (err, results) => {
+        if (err){
+            return res.status(500).json({ error: err.error});
+        }
+
+        if (results.length == 0){
+            return res.status(400).json({ error: 'Invalid credentials!'});
+        }
+
+        const token = generateToken({
+            id: results[0].id,
+            name: results[0].name,
+            email: results[0].email,
+            role: results[0].role
+        });
+        return res.status(200).json({ token })
     });
 });
 

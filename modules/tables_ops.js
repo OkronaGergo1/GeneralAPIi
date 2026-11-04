@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const {tokencheck} = require('../utiles/jwt.js')
+const {tokencheck, admincheck} = require('../utiles/jwt.js')
 
-var db = require('../utils/database.js');
+var db = require('../utiles/database.js');
 
 const publicTables = process.env.PUBLIC_TABLES ? process.env.PUBLIC_TABLES.split(',').map(table => table.trim()) : [];
 
@@ -109,7 +109,7 @@ router.get('/:table', tokencheck, (req, res) =>{
 });
 
 // SELECT A SPECIFIC RECORS BY ID FROM A TABLE
-router.get('/:table/:id', (req, res) =>{
+router.get('/:table/:id',tokencheck, (req, res) =>{
     let table = req.params.table;
     let id = req.params.id;
 
@@ -124,7 +124,7 @@ router.get('/:table/:id', (req, res) =>{
 });
 
 //SELECT RECORDS FROM A TABLE WHERE A SPECIFIC FIELD MATCHES A VALUE
-router.get('/:table/:field/:value', (req, res) =>{
+router.get('/:table/:field/:value',tokencheck, (req, res) =>{
     let table = req.params.table;
     let field = req.params.field;
     let value = req.params.value;
@@ -138,70 +138,7 @@ router.get('/:table/:field/:value', (req, res) =>{
     });
 });
 
-router.get('/:table/:field/:operator/:value', (req, res) =>{
-    let table = req.params.table;
-    let field = req.params.field;
-    let operator = getOps(req.params.operator);
-    let value = req.params.value;
-    if (operator === 'LIKE' || operator === 'NOT LIKE'){
-        value = '%' + req.params.value + '%';
-    }
-
-    db.query(`SELECT * FORM ${table} where ${field} ${operator} ?`, [value], (err, results) =>{
-        if (err){
-            return res.status(500).json({ error: 'Database query error: ' + err.message})
-        }
-        else{
-            return res.status(200).json(results);
-        }
-    });
-});
-
-// SELECT ALL RECORDS FROM A TABLE
-router.get('/:table', (req, res) =>{
-    let table = req.params.table;
-
-    db.query(`SELECT * FORM ${table}`, (err, results) =>{
-        if (err){
-            return res.status(500).json({ error: 'Database query error'})
-        }
-        else{
-            return res.status(200).json(results);
-        }
-    });
-});
-
-// SELECT A SPECIFIC RECORS BY ID FROM A TABLE
-router.get('/:table/:id', (req, res) =>{
-    let table = req.params.table;
-    let id = req.params.id;
-
-    db.query(`SELECT * FROM ${table} where ID = ?`, [id], (err, results) =>{
-        if (err){
-            return res.status(500).json({ error: 'Database query error: ' + err.message})
-        }
-        else{
-            return res.status(200).json(results);
-        }
-    });
-});
-
-//SELECT RECORDS FROM A TABLE WHERE A SPECIFIC FIELD MATCHES A VALUE
-router.get('/:table/:field/:value', (req, res) =>{
-    let table = req.params.table;
-    let field = req.params.field;
-    let value = req.params.value;
-    db.query(`SELECT * FORM ${table} where ${field} = ?`, [value], (err, results) =>{
-        if (err){
-            return res.status(500).json({ error: 'Database query error: ' + err.message})
-        }
-        else{
-            return res.status(200).json(results);
-        }
-    });
-});
-
-router.get('/:table/:field/:operator/:value', (req, res) =>{
+router.get('/:table/:field/:operator/:value',tokencheck, (req, res) =>{
     let table = req.params.table;
     let field = req.params.field;
     let operator = getOps(req.params.operator);
@@ -221,7 +158,7 @@ router.get('/:table/:field/:operator/:value', (req, res) =>{
 });
 
 // ADD NEW RECORD TO A TABLE
-router.post('/:table', (req, res) =>{
+router.post('/:table', admincheck, (req, res) =>{
     let table = req.params.table;
     let data = req.body;
 
@@ -239,7 +176,7 @@ router.post('/:table', (req, res) =>{
 });
 
 // UPDATE RECORDS FROM A TABLE
-router.patch('/:table/:id', (req, res) =>{
+router.patch('/:table/:id', tokencheck, (req, res) =>{
     let table = req.params.table;
     let id = req.params.id;
     let data = req.body;
@@ -257,7 +194,7 @@ router.patch('/:table/:id', (req, res) =>{
 });
 
 // UPDATE RECORD IN A SPECIFIC FIELD
-router.patch('/:table/:field/:value', (req, res) =>{
+router.patch('/:table/:field/:value', tokencheck, (req, res) =>{
     let table = req.params.table;
     let field = req.params.field;
     let value = req.params.value;
@@ -275,7 +212,7 @@ router.patch('/:table/:field/:value', (req, res) =>{
     });
 });
 
-router.patch('/:table/:field/:operator/:value', (req, res) =>{
+router.patch('/:table/:field/:operator/:value', tokencheck, (req, res) =>{
     let table = req.params.table;
     let field = req.params.field;
     let operator = getOps(req.params.operator);
@@ -297,7 +234,7 @@ router.patch('/:table/:field/:operator/:value', (req, res) =>{
     });
 });
 //DELETE ALL RECORDS FROM A TABLE
-router.delete('/:table', (req, res) =>{
+router.delete('/:table', tokencheck, (req, res) =>{
     let table = req.params.table;
 
     db.query(`DELETE FROM ${table}`, (err, _results) =>{
@@ -311,7 +248,7 @@ router.delete('/:table', (req, res) =>{
 });
 
 //DELETE A SPECIFIC RECORD BY ID FROM A TABLE
-router.delete('/:table/:id', (req, res) =>{
+router.delete('/:table/:id', tokencheck, (req, res) =>{
     let table = req.params.table;
     let id = req.params.id;
 
@@ -325,7 +262,7 @@ router.delete('/:table/:id', (req, res) =>{
     });
 });
 
-router.delete('/:table/:field/:value', (req, res) =>{
+router.delete('/:table/:field/:value', tokencheck, (req, res) =>{
     let table = req.params.table;
     let field = req.params.field;
     let value = req.params.value;
@@ -339,7 +276,7 @@ router.delete('/:table/:field/:value', (req, res) =>{
     });
 });
 
-router.delete('/:table/:field/:operator/:value', (req, res) =>{
+router.delete('/:table/:field/:operator/:value', tokencheck, (req, res) =>{
     let table = req.params.table;
     let field = req.params.field;
     let operator = getOps(req.params.operator);
